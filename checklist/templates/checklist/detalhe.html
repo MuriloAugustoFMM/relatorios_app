@@ -1,0 +1,82 @@
+{% extends "checklist/base.html" %}
+{% block titulo %}{{ checklist.titulo }}{% endblock %}
+{% block conteudo %}
+    <h1>{{ checklist.get_tipo_display }}</h1>
+    <p><strong>{{ checklist.titulo }}</strong></p>
+    <p>
+        Máquina: {{ checklist.maquina }}<br>
+        Cliente: {{ checklist.cliente|default:"—" }}<br>
+        Responsável: {{ checklist.responsavel }} — Data: {{ checklist.data|date:"d/m/Y" }}
+    </p>
+
+    <a class="botao" href="{% url 'checklist:gerar_pdf' checklist.pk %}" target="_blank">Gerar / Baixar PDF</a>
+
+    {% if checklist.usa_itens_estruturados %}
+    <div class="secao">
+        <h2>Itens do Checklist</h2>
+        <table>
+            <tr><th>Pergunta</th><th>Resultado</th><th>Observação</th></tr>
+            {% for item in checklist.itens.all %}
+            <tr>
+                <td>{{ item.pergunta }}</td>
+                <td>{{ item.get_resultado_display|default:"—" }}</td>
+                <td>{{ item.observacao|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="3">Nenhum item adicionado ainda.</td></tr>
+            {% endfor %}
+        </table>
+
+        <form method="post">
+            {% csrf_token %}
+            {{ item_form.as_p }}
+            <button type="submit" name="adicionar_item">Adicionar item</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="secao">
+        <h2>Fotos</h2>
+        {% if checklist.fotos.all %}
+        <p style="font-size:12px; color:#666;">Arraste as fotos para reordenar e clique em "Salvar ordem".</p>
+        <form method="post" id="form-ordem-fotos">
+            {% csrf_token %}
+            <input type="hidden" name="ordem_ids" id="ordem_ids_input">
+            <div class="foto-lista" id="lista-fotos-sortable">
+                {% for foto in checklist.fotos.all %}
+                    <div class="foto-item" data-id="{{ foto.pk }}">
+                        <img src="{{ foto.imagem.url }}" title="{{ foto.legenda }}">
+                    </div>
+                {% endfor %}
+            </div>
+            <button type="submit" name="salvar_ordem">Salvar ordem</button>
+        </form>
+        {% else %}
+            <p>Nenhuma foto enviada ainda.</p>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" style="margin-top:16px;">
+            {% csrf_token %}
+            {{ foto_form.as_p }}
+            <button type="submit" name="adicionar_fotos">Enviar fotos</button>
+        </form>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+    <script>
+    (function () {
+        var lista = document.getElementById('lista-fotos-sortable');
+        if (!lista) return;
+
+        new Sortable(lista, {
+            animation: 150,
+            ghostClass: 'foto-fantasma',
+        });
+
+        document.getElementById('form-ordem-fotos').addEventListener('submit', function () {
+            var ids = Array.prototype.map.call(lista.children, function (el) { return el.dataset.id; });
+            document.getElementById('ordem_ids_input').value = ids.join(',');
+        });
+    })();
+    </script>
+{% endblock %}

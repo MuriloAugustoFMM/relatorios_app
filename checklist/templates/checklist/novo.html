@@ -1,0 +1,105 @@
+{% extends "checklist/base.html" %}
+{% block titulo %}Novo Checklist{% endblock %}
+{% block conteudo %}
+    <h1>Novo Checklist</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        <label for="{{ form.tipo.id_for_label }}">{{ form.tipo.label }}</label>
+        {{ form.tipo }}
+        {{ form.tipo.errors }}
+
+        <label for="{{ form.cliente.id_for_label }}">{{ form.cliente.label }}</label>
+        {{ form.cliente }}
+        {{ form.cliente.errors }}
+
+        <div class="secao">
+            <label>Máquina</label>
+            <input type="text" id="busca_maquina" placeholder="Digite o identificador ou a descrição para buscar..." autocomplete="off">
+            <div id="resultados_maquina" style="border:1px solid #ddd; border-radius:4px; margin-top:4px;"></div>
+            <p id="maquina_selecionada" style="display:none; font-size:13px; color:#2c5aa0; margin-top:6px;">
+                Selecionada: <strong><span></span></strong> — <a href="#" id="limpar_maquina">trocar</a>
+            </p>
+            {{ form.maquina }}
+
+            <details style="margin-top:12px;">
+                <summary style="cursor:pointer; font-size:13px;">Não encontrou? Cadastrar novo equipamento</summary>
+                <label for="{{ form.nova_maquina_descricao.id_for_label }}">{{ form.nova_maquina_descricao.label }}</label>
+                {{ form.nova_maquina_descricao }}
+                {{ form.nova_maquina_descricao.errors }}
+                <label for="{{ form.nova_maquina_identificador.id_for_label }}">{{ form.nova_maquina_identificador.label }}</label>
+                {{ form.nova_maquina_identificador }}
+                {{ form.nova_maquina_identificador.errors }}
+            </details>
+        </div>
+
+        <label for="{{ form.responsavel.id_for_label }}">{{ form.responsavel.label }}</label>
+        {{ form.responsavel }}
+        {{ form.responsavel.errors }}
+
+        <label for="{{ form.medidor.id_for_label }}">{{ form.medidor.label }}</label>
+        {{ form.medidor }}
+
+        <label for="{{ form.referencia_sistema.id_for_label }}">{{ form.referencia_sistema.label }}</label>
+        {{ form.referencia_sistema }}
+
+        <label for="{{ form.data.id_for_label }}">{{ form.data.label }}</label>
+        {{ form.data }}
+        {{ form.data.errors }}
+
+        <label for="{{ form.observacoes_gerais.id_for_label }}">{{ form.observacoes_gerais.label }}</label>
+        {{ form.observacoes_gerais }}
+
+        <button type="submit">Criar e continuar</button>
+    </form>
+
+<script>
+(function () {
+    const buscaInput = document.getElementById('busca_maquina');
+    const resultadosDiv = document.getElementById('resultados_maquina');
+    const maquinaHidden = document.getElementById('{{ form.maquina.id_for_label }}');
+    const selecionadaP = document.getElementById('maquina_selecionada');
+    const selecionadaSpan = selecionadaP.querySelector('span');
+    const limparLink = document.getElementById('limpar_maquina');
+
+    let timeoutBusca;
+    buscaInput.addEventListener('input', function () {
+        clearTimeout(timeoutBusca);
+        const q = this.value.trim();
+        if (q.length < 2) { resultadosDiv.innerHTML = ''; return; }
+        timeoutBusca = setTimeout(function () {
+            fetch("{% url 'checklist:buscar_maquinas' %}?q=" + encodeURIComponent(q))
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    resultadosDiv.innerHTML = '';
+                    data.resultados.forEach(function (m) {
+                        const item = document.createElement('div');
+                        item.textContent = m.texto;
+                        item.style.cursor = 'pointer';
+                        item.style.padding = '6px 8px';
+                        item.style.borderBottom = '1px solid #eee';
+                        item.addEventListener('click', function () {
+                            maquinaHidden.value = m.id;
+                            selecionadaSpan.textContent = m.texto;
+                            selecionadaP.style.display = 'block';
+                            buscaInput.style.display = 'none';
+                            resultadosDiv.innerHTML = '';
+                        });
+                        resultadosDiv.appendChild(item);
+                    });
+                });
+        }, 250);
+    });
+
+    limparLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        maquinaHidden.value = '';
+        selecionadaP.style.display = 'none';
+        buscaInput.style.display = 'block';
+        buscaInput.value = '';
+        buscaInput.focus();
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+# ==========================================================================
+# Variáveis de ambiente / segredos — NUNCA versionar
+# ==========================================================================
+.env
+.env.*
+!.env.example
+
+# ==========================================================================
+# Python / Django
+# ==========================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.Python
+build/
+dist/
+
+# Arquivos estáticos coletados pelo collectstatic (gerados, não versionar)
+staticfiles/
+
+# Mídia local (não deveria existir no fluxo normal, já que tudo vai pro MinIO,
+# mas evita subir algo por engano se alguém rodar sem storage configurado)
+media/
+
+# Banco de dados local (caso alguém rode fora do Docker com sqlite por engano)
+*.sqlite3
+db.sqlite3
+
+# Migrations geradas automaticamente por makemigrations ficam versionadas
+# normalmente — NÃO ignore a pasta migrations/, só isso aqui:
+*.pyc
+
+# ==========================================================================
+# Dados sensíveis / massa de teste
+# ==========================================================================
+# CSVs com dados reais de clientes/máquinas usados no popular_dados —
+# contém CNPJ, endereço, contato etc. Não deveria ir pro repositório.
+dados/
+
+# ==========================================================================
+# Docker
+# ==========================================================================
+docker-compose.override.yml
+
+# ==========================================================================
+# Editores / IDEs
+# ==========================================================================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================================================================
+# Sistema Operacional
+# ==========================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================================================
+# Logs
+# ==========================================================================
+*.log

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ checklist.titulo }}</title>
+    <style>
+        /* ==========================================================================
+           Paleta Master: Verde (#2bb673), Preto (#111111) e Branco
+           ========================================================================== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @page {
+            size: A4;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'DejaVu Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #ffffff;
+            color: #111111;
+            line-height: 1.5;
+        }
+
+        /* ---------- Estrutura de páginas (A4) ---------- */
+        .capa {
+            width: 210mm;
+            min-height: 297mm;
+            page-break-after: always;
+            padding: 20mm;
+            background-color: #fcfdfc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .bloco-imagem {
+            width: 210mm;
+            height: 297mm;
+            page-break-after: always;
+            page-break-inside: avoid;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 12mm 18mm;
+            background-color: #ffffff;
+        }
+
+        /* ---------- Capa ---------- */
+        #logo_empresa {
+            max-height: 28mm;
+            max-width: 65mm;
+            object-fit: contain;
+            margin-bottom: 15mm;
+            align-self: flex-start;
+        }
+
+        .cabecalho-titulos {
+            width: 100%;
+            border-left: 5px solid #2bb673;
+            padding-left: 20px;
+            margin-bottom: 12mm;
+            text-align: left;
+        }
+
+        .cabecalho-titulos h1 {
+            font-size: 24pt;
+            font-weight: 800;
+            color: #111111;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .cabecalho-titulos h2 {
+            font-size: 12pt;
+            font-weight: 500;
+            color: #555555;
+        }
+
+        /* ---------- Formulário (dados do checklist) ---------- */
+        .form_container {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            width: 100%;
+            padding: 14mm 15mm;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+            margin-bottom: 10mm;
+        }
+
+        .form_container h3 {
+            font-size: 11pt;
+            color: #2bb673;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 6px;
+        }
+
+        .form_table { width: 100%; border-collapse: separate; border-spacing: 0 14px; }
+
+        label {
+            display: block;
+            font-size: 8.5pt;
+            font-weight: 700;
+            color: #222222;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .input_box {
+            width: 100%;
+            min-height: 34px;
+            padding: 6px 12px;
+            font-size: 10.5pt;
+            color: #111111;
+            background-color: #f4f6f4;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            line-height: 1.4;
+            overflow-wrap: break-word;
+        }
+
+        .textarea_box {
+            width: 100%;
+            min-height: 70px;
+            padding: 10px 12px;
+            font-size: 10.5pt;
+            color: #111111;
+            background-color: #f4f6f4;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            line-height: 1.4;
+        }
+
+        /* ---------- Tabela de itens do checklist ---------- */
+        table.itens { width: 100%; border-collapse: collapse; font-size: 10pt; }
+        table.itens th {
+            background: #111111;
+            color: #fff;
+            padding: 6px 10px;
+            text-align: left;
+            font-size: 9pt;
+            text-transform: uppercase;
+        }
+        table.itens td { border: 1px solid #e2e8f0; padding: 6px 10px; }
+        table.itens tr:nth-child(even) td { background: #fafafa; }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 10px;
+            font-size: 8.5pt;
+            font-weight: bold;
+            color: #fff;
+        }
+        .badge-conforme { background: #2bb673; }
+        .badge-nao_conforme { background: #cf222e; }
+        .badge-nao_aplicavel { background: #8c8c8c; }
+
+        /* ---------- Molduras e imagens ---------- */
+        .moldura {
+            width: 170mm;
+            height: 175mm;
+            border: 2px solid #111111;
+            border-radius: 6px;
+            padding: 5mm;
+            background-color: #fafafa;
+            margin-bottom: 10mm;
+            overflow: hidden;
+        }
+
+        .moldura .foto-conteudo {
+            width: 100%;
+            height: 100%;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: contain;
+        }
+
+        /* ---------- Rodapé por imagem: descrição da máquina ---------- */
+        .secao-descricao-imagem {
+            width: 170mm;
+            background-color: #ffffff;
+            border: 1px solid #111111;
+            border-top: 4px solid #2bb673;
+            border-radius: 4px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .mini-logo-container {
+            width: 35mm;
+            height: 12mm;
+            padding-right: 10px;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .mini-logo {
+            width: 100%;
+            height: 100%;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: contain;
+        }
+
+        .conteudo-detalhes-imagem { width: 125mm; padding-left: 15px; }
+
+        .meta-dados-maquina {
+            font-size: 8pt;
+            font-weight: 700;
+            color: #555555;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            border-bottom: 1px dashed #e2e8f0;
+            padding-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .meta-dados-maquina span { color: #2bb673; }
+
+        .texto-descricao { font-size: 10pt; color: #111111; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <!-- CAPA -->
+    <div class="capa">
+        <img id="logo_empresa" src="data:image/webp;base64,{{ logo_base64 }}" alt="Logo Master">
+
+        <div class="cabecalho-titulos">
+            <h1>{{ checklist.get_tipo_display }}</h1>
+            <h2>Inspetor / Autor: {{ checklist.responsavel }}</h2>
+        </div>
+
+        <div class="form_container">
+            <table class="form_table">
+                <tr>
+                    <td style="width:50%; padding-right:10px;">
+                        <label>Equipamento</label>
+                        <div class="input_box">{{ checklist.maquina.descricao }}</div>
+                    </td>
+                    <td style="width:50%; padding-left:10px;">
+                        <label>Patrimônio</label>
+                        <div class="input_box">{{ checklist.maquina.identificador }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:50%; padding-right:10px;">
+                        <label>Medidor</label>
+                        <div class="input_box">{{ checklist.medidor|default:"—" }}</div>
+                    </td>
+                    <td style="width:50%; padding-left:10px;">
+                        <label>Referência Sistema</label>
+                        <div class="input_box">{{ checklist.referencia_sistema|default:"—" }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width:50%; padding-right:10px;">
+                        <label>Cliente</label>
+                        <div class="input_box">{{ checklist.cliente.nome|default:"—" }}</div>
+                    </td>
+                    <td style="width:50%; padding-left:10px;">
+                        <label>Data de Emissão</label>
+                        <div class="input_box">{{ checklist.data|date:"d/m/Y" }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <label>Observações Técnicas</label>
+                        <div class="textarea_box">{{ checklist.observacoes_gerais|default:"—" }}</div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        {% if checklist.usa_itens_estruturados %}
+        <div class="form_container">
+            <h3>Itens do Checklist</h3>
+            <table class="itens">
+                <thead>
+                    <tr><th>Item</th><th>Resultado</th><th>Observação</th></tr>
+                </thead>
+                <tbody>
+                    {% for item in checklist.itens.all %}
+                    <tr>
+                        <td>{{ item.pergunta }}</td>
+                        <td>
+                            {% if item.resultado %}
+                                <span class="badge badge-{{ item.resultado|lower }}">{{ item.get_resultado_display }}</span>
+                            {% else %}—{% endif %}
+                        </td>
+                        <td>{{ item.observacao|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- UMA PÁGINA POR IMAGEM -->
+    {% for foto in checklist.fotos.all %}
+    <div class="bloco-imagem">
+        <div class="moldura">
+            <div class="foto-conteudo" style="background-image: url('{{ foto.imagem.url }}');"></div>
+        </div>
+
+        <div class="secao-descricao-imagem">
+            <div class="mini-logo-container">
+                <div class="mini-logo" style="background-image: url('data:image/webp;base64,{{ logo_base64 }}');"></div>
+            </div>
+            <div class="conteudo-detalhes-imagem">
+                <div class="meta-dados-maquina">
+                    {{ checklist.maquina.descricao }} — Ref: <span>{{ checklist.maquina.identificador }}</span>
+                    | Autor: {{ checklist.responsavel }}
+                    {% if foto.item %} | Item: {{ foto.item.pergunta }}{% endif %}
+                </div>
+                {% if foto.legenda %}
+                    <div class="texto-descricao">{{ foto.legenda }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</body>
+</html>
