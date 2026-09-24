@@ -92,7 +92,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # vêm restringindo acesso livre às imagens, ver histórico do projeto).
 # ---------------------------------------------------------------------------
 MEDIA_BACKEND = config("MEDIA_BACKEND", default="s3")
-MEDIA_URL = "media/"
+MEDIA_URL = "/media/"
 
 if MEDIA_BACKEND == "local":
     STORAGES = {

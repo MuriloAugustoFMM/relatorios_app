@@ -28,35 +28,49 @@ def _logo_base64():
 def _fetcher_interno(url, *args, **kwargs):
     """
     O WeasyPrint roda DENTRO do container 'web' e precisa buscar as imagens
-    das fotos para montar o PDF. As URLs salvas no banco apontam para o
+    das fotos para montar o PDF.
+
+    Com storage no MinIO (S3): as URLs salvas no banco apontam para o
     endpoint PÚBLICO do MinIO (ex: localhost:9000/bucket), que só existe do
     ponto de vista do navegador do usuário — de dentro do container, o MinIO
-    só é alcançável pelo nome do serviço docker ("minio:9000").
-    Por isso, ao buscar a imagem para o PDF, trocamos só o HOST público pelo
-    host interno, preservando o resto do caminho (bucket + chave do arquivo).
+    só é alcançável pelo nome do serviço docker ("minio:9000"). Por isso,
+    trocamos só o HOST público pelo host interno, preservando o resto do
+    caminho (bucket + chave do arquivo).
+
+    Com storage local: a URL já vem absoluta (resolvida via base_url na
+    hora de montar o PDF) e aponta pro próprio servidor Django — não precisa
+    de nenhuma troca, só busca normal.
     """
-    publico_host = settings.AWS_S3_CUSTOM_DOMAIN.split("/")[0]  # ex: "localhost:9000"
-    interno_host = settings.AWS_S3_ENDPOINT_URL.replace("http://", "").replace("https://", "")  # ex: "minio:9000"
-    if publico_host and publico_host in url:
-        url = url.replace(publico_host, interno_host).replace("https://", "http://")
+    if settings.MEDIA_BACKEND == "s3":
+        publico_host = settings.AWS_S3_CUSTOM_DOMAIN.split("/")[0]  # ex: "localhost:9000"
+        interno_host = settings.AWS_S3_ENDPOINT_URL.replace("http://", "").replace("https://", "")  # ex: "minio:9000"
+        if publico_host and publico_host in url:
+            url = url.replace(publico_host, interno_host).replace("https://", "http://")
     return default_url_fetcher(url, *args, **kwargs)
 
 
 def gerar_pdf_checklist(request, pk):
     """
     Gera (ou regenera) o PDF de um checklist a partir do template HTML,
-    salva o resultado no MinIO (campo pdf_gerado) e devolve o arquivo.
+    salva o resultado no storage configurado (campo pdf_gerado) e devolve o arquivo.
     """
     checklist = get_object_or_404(Checklist, pk=pk)
 
     html_string = render_to_string(
         "checklist/relatorio_pdf.html", {"checklist": checklist, "logo_base64": _logo_base64()}
     )
-    pdf_bytes = HTML(string=html_string, url_fetcher=_fetcher_interno).write_pdf()
+    # base_url é o que permite ao WeasyPrint resolver URLs relativas de mídia
+    # (ex: "/media/fotos/x.jpg", usado quando MEDIA_BACKEND=local) em endereços
+    # que ele consegue buscar. Com MinIO as URLs já vêm absolutas, então isso
+    # não muda nada nesse caso.
+    pdf_bytes = HTML(
+        string=html_string, base_url=request.build_absolute_uri("/"), url_fetcher=_fetcher_interno
+    ).write_pdf()
 
-    # Salva/atualiza o PDF no storage (MinIO) para consulta futura sem reprocessar
+    # Salva/atualiza o PDF no storage para consulta futura sem reprocessar
     nome_arquivo = f"{checklist.titulo}.pdf"
     checklist.pdf_gerado.save(nome_arquivo, ContentFile(pdf_bytes), save=True)
+
 
     response = HttpResponse(pdf_bytes, content_type="application/pdf")
     response["Content-Disposition"] = f'inline; filename="{nome_arquivo}"'
