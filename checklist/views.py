@@ -30,17 +30,27 @@ def _fetcher_interno(url, *args, **kwargs):
     O WeasyPrint roda DENTRO do container 'web' e precisa buscar as imagens
     das fotos para montar o PDF.
 
-    Com storage no MinIO (S3): as URLs salvas no banco apontam para o
-    endpoint PÚBLICO do MinIO (ex: localhost:9000/bucket), que só existe do
-    ponto de vista do navegador do usuário — de dentro do container, o MinIO
-    só é alcançável pelo nome do serviço docker ("minio:9000"). Por isso,
-    trocamos só o HOST público pelo host interno, preservando o resto do
-    caminho (bucket + chave do arquivo).
+    Com storage local: em vez de fazer uma requisição HTTP da aplicação pra
+    ela mesma (o que trava numa VPS pequena — ocupa 2 workers do Gunicorn ao
+    mesmo tempo bem na hora que o WeasyPrint já está pesando na RAM), lemos o
+    arquivo DIRETO DO DISCO. Mais rápido e não disputa memória/worker com a
+    própria geração do PDF.
 
-    Com storage local: a URL já vem absoluta (resolvida via base_url na
-    hora de montar o PDF) e aponta pro próprio servidor Django — não precisa
-    de nenhuma troca, só busca normal.
+    Com MinIO (S3): as URLs salvas no banco apontam para o endpoint PÚBLICO
+    do MinIO (ex: localhost:9000/bucket), que só existe do ponto de vista do
+    navegador do usuário — de dentro do container, o MinIO só é alcançável
+    pelo nome do serviço docker ("minio:9000"). Por isso, trocamos só o HOST
+    público pelo host interno, preservando o resto do caminho.
     """
+    if settings.MEDIA_BACKEND == "local":
+        marcador = settings.MEDIA_URL  # "/media/"
+        posicao = url.find(marcador)
+        if posicao != -1:
+            caminho_relativo = url[posicao + len(marcador):]
+            caminho_arquivo = Path(settings.MEDIA_ROOT) / caminho_relativo
+            return default_url_fetcher(caminho_arquivo.resolve().as_uri())
+        return default_url_fetcher(url, *args, **kwargs)
+
     if settings.MEDIA_BACKEND == "s3":
         publico_host = settings.AWS_S3_CUSTOM_DOMAIN.split("/")[0]  # ex: "localhost:9000"
         interno_host = settings.AWS_S3_ENDPOINT_URL.replace("http://", "").replace("https://", "")  # ex: "minio:9000"
