@@ -17,26 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  minio:
-    image: bitnami/minio:latest
-    container_name: relatorios_minio
-    restart: unless-stopped
-    volumes:
-      - miniodata:/bitnami/minio/data
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
-      # Cria o bucket automaticamente com política de leitura pública já no start
-      MINIO_DEFAULT_BUCKETS: ${MINIO_BUCKET:-relatorios-fotos}:download
-    ports:
-      - "9000:9000"   # API do MinIO (S3-compatível)
-      - "9001:9001"   # Console web do MinIO
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   web:
     build: .
     container_name: relatorios_web
@@ -56,10 +36,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      minio:
-        condition: service_healthy
 
 volumes:
   pgdata:
-  miniodata:
   static_volume:

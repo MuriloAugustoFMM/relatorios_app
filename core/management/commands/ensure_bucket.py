@@ -13,6 +13,10 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        if settings.MEDIA_BACKEND == "local":
+            self.stdout.write("MEDIA_BACKEND=local — sem MinIO pra configurar, pulando.")
+            return
+
         client = boto3.client(
             "s3",
             endpoint_url=settings.AWS_S3_ENDPOINT_URL,
