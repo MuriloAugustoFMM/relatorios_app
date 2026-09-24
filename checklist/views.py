@@ -61,10 +61,14 @@ def gerar_pdf_checklist(request, pk):
     )
     # base_url é o que permite ao WeasyPrint resolver URLs relativas de mídia
     # (ex: "/media/fotos/x.jpg", usado quando MEDIA_BACKEND=local) em endereços
-    # que ele consegue buscar. Com MinIO as URLs já vêm absolutas, então isso
-    # não muda nada nesse caso.
+    # que ele consegue buscar. Usamos 127.0.0.1 (loopback) em vez do host público
+    # (request.build_absolute_uri) de propósito: muitos provedores de nuvem não
+    # suportam o servidor se conectar no próprio IP público de dentro pra fora
+    # ("NAT hairpinning"), o que travava a geração do PDF esperando uma resposta
+    # que nunca chegava. Loopback sempre funciona, porque nunca sai do container.
+    # Com MinIO (S3) as URLs já vêm absolutas, então isso não muda nada nesse caso.
     pdf_bytes = HTML(
-        string=html_string, base_url=request.build_absolute_uri("/"), url_fetcher=_fetcher_interno
+        string=html_string, base_url="http://127.0.0.1:8000/", url_fetcher=_fetcher_interno
     ).write_pdf()
 
     # Salva/atualiza o PDF no storage para consulta futura sem reprocessar
